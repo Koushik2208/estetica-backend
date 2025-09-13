@@ -2,6 +2,14 @@ const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const AppError = require("../utils/AppError");
 
+// Utility to calculate total
+const calculateCartTotal = (items) => {
+  return items.reduce(
+    (sum, item) => sum + item.quantity * (item.product.price || 0),
+    0
+  );
+};
+
 // @desc    Get current user's cart
 // @route   GET /api/cart
 // @access  Private
@@ -12,7 +20,10 @@ exports.getCart = async (req, res) => {
       "name price imageUrl"
     );
 
-    res.status(200).json(cart || { items: [] });
+    const items = cart?.items || [];
+    const total = calculateCartTotal(items);
+
+    res.status(200).json({ items, total });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: "fail", message: "Failed to fetch cart" });
@@ -56,9 +67,14 @@ exports.addOrUpdateItem = async (req, res) => {
       await cart.save();
     }
 
-    const populatedCart = await cart.populate("items.product", "name price");
+    const populatedCart = await cart.populate(
+      "items.product",
+      "name price imageUrl"
+    );
+    const items = populatedCart.items;
+    const total = calculateCartTotal(items);
 
-    res.status(200).json(populatedCart);
+    res.status(200).json({ items, total });
   } catch (err) {
     if (!err.statusCode) {
       console.error(err);
@@ -82,9 +98,14 @@ exports.removeItem = async (req, res) => {
 
     await cart.save();
 
-    const populatedCart = await cart.populate("items.product", "name price");
+    const populatedCart = await cart.populate(
+      "items.product",
+      "name price imageUrl"
+    );
+    const items = populatedCart.items;
+    const total = calculateCartTotal(items);
 
-    res.status(200).json(populatedCart);
+    res.status(200).json({ items, total });
   } catch (err) {
     if (!err.statusCode) {
       console.error(err);

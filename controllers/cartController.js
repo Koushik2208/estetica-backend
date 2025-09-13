@@ -114,3 +114,24 @@ exports.removeItem = async (req, res) => {
     res.status(err.statusCode).json({ status: "fail", message: err.message });
   }
 };
+
+exports.clearCart = async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+      return res.status(200).json({ items: [], total: 0 });
+    }
+
+    cart.items = []; // remove all items
+    cart.updatedAt = Date.now();
+    await cart.save();
+
+    res.status(200).json({ items: [], total: 0 });
+  } catch (err) {
+    if (!err.statusCode) {
+      console.error(err);
+      err = new AppError(err.message || "Server Error", 500);
+    }
+    res.status(err.statusCode).json({ status: "fail", message: err.message });
+  }
+};
